@@ -6,7 +6,7 @@ use bevy::{
     },
     reflect::TypeRegistration,
 };
-use clap::{App, AppSettings, ArgGroup, ArgMatches};
+use clap::{App, Arg, AppSettings, ArgGroup, ArgMatches};
 
 pub fn list_resources(archetypes: &Archetypes, components: &Components) -> String {
     let mut output = String::new();
@@ -314,7 +314,10 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                 )
                 .subcommand(App::new("info")
                     .about("get info of one archetype")
-                    .arg("--id [Id] 'id to get'")
+                    .arg(Arg::new("id")
+                        .long("id")
+                        .value_name("Id")
+                        .help("id to get"))
                     .group(ArgGroup::new("search params")
                         .args(&["id"])
                         .required(true)
@@ -322,9 +325,15 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                 )
                 .subcommand(App::new("find")
                     .about("find a archetype")
-                    .arg("--componentid   [ComponentId]   'find types that have components with ComponentId'")
-                    .arg("--componentname [ComponentName] 'find types that have components with ComponentName'")
-                    .arg("--entityid      [EntityId]      'find types that have entities with EntityId")
+                    .arg(Arg::new("componentid")
+                        .long("componentid")
+                        .help("find types that have components with ComponentId"))
+                    .arg(Arg::new("componentname")
+                        .long("componentname")
+                        .help("find types that have components with ComponentName"))
+                    .arg(Arg::new("entityid")
+                        .long("entityid")
+                        .help("find types that have entities with EntityId"))
                     .group(ArgGroup::new("search params")
                         .args(&["componentid", "componentname", "entityid"])
                         .required(true)
@@ -338,13 +347,23 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(App::new("list")
                     .about("list all components")
-                    .arg("-f, --filter [Filter] 'filter list'")
-                    .arg("-l, --long 'display long name'"),
+                    .arg(Arg::new("filter")
+                        .short('f')
+                        .long("filter")
+                        .help("filter list"))
+                    .arg(Arg::new("long")
+                        .short('l')
+                        .long("long")
+                        .help("display long name")),
                 )
                 .subcommand(App::new("info")
                     .about("get info of one component")
-                    .arg("--id   [Id]   'id to get'")
-                    .arg("--name [Name] 'name to get'")
+                    .arg(Arg::new("id")
+                        .long("id")
+                        .help("id to get"))
+                    .arg(Arg::new("name")
+                        .long("name")
+                        .help("name to get"))
                     .group(ArgGroup::new("search params")
                         .args(&["id", "name"])
                         .required(true)
@@ -362,8 +381,12 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                 .subcommand(
                     App::new("find")
                         .about("find entity matching search params")
-                        .arg("--componentid   [ComponentId]   'find types that have components with ComponentId'")
-                        .arg("--componentname [ComponentName] 'find types that have components with ComponentName'")
+                        .arg(Arg::new("componentid")
+                            .long("componentid")
+                            .help("find types that have components with ComponentId"))
+                        .arg(Arg::new("componentname")
+                            .long("componentname")
+                            .help("find types that have components with ComponentName"))
                         .group(ArgGroup::new("search params")
                             .args(&["componentid", "componentname"])
                             .required(true)
