@@ -11,7 +11,6 @@ version = "0.1.0"
 homepage = "https://github.com/hymm/bevy_mod_debug_console"
 repository = "https://github.com/hymm/bevy_mod_debug_console"
 documentation = "https://docs.rs/bevy_mod_debug_console"
-resolver = "2"
 
 [dependencies]
 bevy = {version = "0.8", default-features = false}
