@@ -4,7 +4,7 @@ use bevy::{
         component::{ComponentId, Components, StorageType},
         entity::{Entities, Entity},
     },
-    reflect::TypeRegistration,
+    utils::get_short_name,
 };
 use clap::{App, Arg, AppSettings, ArgGroup, ArgMatches};
 
@@ -18,8 +18,8 @@ pub fn list_resources(archetypes: &Archetypes, components: &Components) -> Strin
         // get_short_name removes the path information
         // i.e. `bevy_audio::audio::Audio` -> `Audio`
         // if you want to see the path info replace
-        // `TypeRegistration::get_short_name` with `String::from`
-        .map(|info| TypeRegistration::get_short_name(info.name()))
+        // `get_short_name` with `String::from`
+        .map(|info| get_short_name(info.name()))
         .collect();
 
     // sort list alphebetically
@@ -41,7 +41,7 @@ fn get_components_by_name(
     for id in 1..components.len() {
         if let Some(info) = components.get_info(ComponentId::new(id)) {
             if short {
-                names.push((id, TypeRegistration::get_short_name(info.name())));
+                names.push((id, get_short_name(info.name())));
             } else {
                 names.push((id, String::from(info.name())));
             }
@@ -75,9 +75,13 @@ fn list_components(c: &Components, short: bool, filter: Option<&str>) -> String 
 fn list_entities(e: &Entities) -> String {
     let mut output = String::new();
     output.push_str(&format!("[entity index] [archetype id]\n"));
-    e.meta.iter().enumerate().for_each(|(id, meta)| {
-        output.push_str(&format!("{} {}\n", id, meta.location.archetype_id.index()));
-    });
+    for id in 0..e.len() {
+        if let Some(entity) = e.resolve_from_id(id) {
+            if let Some(location) = e.get(entity) {
+                output.push_str(&format!("{} {}\n", id, location.archetype_id.index()));
+            }
+        }
+    }
 
     output
 }
@@ -246,7 +250,7 @@ fn print_archetype(a: &Archetypes, c: &Components, archetype_id: ArchetypeId) ->
             .table_components()
             .iter()
             .map(|id| (id.index(), c.get_info(*id).unwrap()))
-            .map(|(id, info)| (id, TypeRegistration::get_short_name(info.name())))
+            .map(|(id, info)| (id, get_short_name(info.name())))
             .for_each(|(id, name)| output.push_str(&format!("{} {}, ", id, name)));
         output.push_str("\n");
 
@@ -258,7 +262,7 @@ fn print_archetype(a: &Archetypes, c: &Components, archetype_id: ArchetypeId) ->
             .sparse_set_components()
             .iter()
             .map(|id| (id.index(), c.get_info(*id).unwrap()))
-            .map(|(id, info)| (id, TypeRegistration::get_short_name(info.name())))
+            .map(|(id, info)| (id, get_short_name(info.name())))
             .for_each(|(id, name)| output.push_str(&format!("{} {}, ", id, name)));
         output.push_str(&format!("\n"));
     } else {
@@ -327,12 +331,15 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                     .about("find a archetype")
                     .arg(Arg::new("componentid")
                         .long("componentid")
+                        .value_name("ComponentId")
                         .help("find types that have components with ComponentId"))
                     .arg(Arg::new("componentname")
                         .long("componentname")
+                        .value_name("ComponentName")
                         .help("find types that have components with ComponentName"))
                     .arg(Arg::new("entityid")
                         .long("entityid")
+                        .value_name("EntityId")
                         .help("find types that have entities with EntityId"))
                     .group(ArgGroup::new("search params")
                         .args(&["componentid", "componentname", "entityid"])
@@ -350,6 +357,7 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                     .arg(Arg::new("filter")
                         .short('f')
                         .long("filter")
+                        .value_name("Filter")
                         .help("filter list"))
                     .arg(Arg::new("long")
                         .short('l')
@@ -360,9 +368,11 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                     .about("get info of one component")
                     .arg(Arg::new("id")
                         .long("id")
+                        .value_name("Id")
                         .help("id to get"))
                     .arg(Arg::new("name")
                         .long("name")
+                        .value_name("Name")
                         .help("name to get"))
                     .group(ArgGroup::new("search params")
                         .args(&["id", "name"])
@@ -383,9 +393,11 @@ pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
                         .about("find entity matching search params")
                         .arg(Arg::new("componentid")
                             .long("componentid")
+                            .value_name("ComponentId")
                             .help("find types that have components with ComponentId"))
                         .arg(Arg::new("componentname")
                             .long("componentname")
+                            .value_name("ComponentName")
                             .help("find types that have components with ComponentName"))
                         .group(ArgGroup::new("search params")
                             .args(&["componentid", "componentname"])

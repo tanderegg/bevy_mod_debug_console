@@ -5,22 +5,21 @@ description = "Bevy plugin to use console to get information from ECS"
 keywords = ["game", "tool", "bevy", "debug"]
 license = "MIT OR MIT-0 OR Apache-2.0"
 authors = ["Mike Hsu <mike.hsu@gmail.com>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 version = "0.0.2"
 homepage = "https://github.com/hymm/bevy_mod_debug_console"
 repository = "https://github.com/hymm/bevy_mod_debug_console"
 documentation = "https://docs.rs/bevy_mod_debug_console"
-resolver = "2"
 
 [dependencies]
-bevy = {version = "0.6", default-features = false}
-clap = "3.0.0-beta.2"
+bevy = {version = "0.8", default-features = false}
+clap = "3.2"
 crossbeam = "0.8"
 
 [dev-dependencies]
-bevy = "0.6"
-bevy_console = "0.3"
+bevy = "0.8"
+bevy_console = "0.4"
 
 [[example]]
 name="example"
