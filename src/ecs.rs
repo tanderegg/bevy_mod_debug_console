@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use bevy::{
     ecs::{
         archetype::{ArchetypeId, Archetypes},
@@ -25,9 +27,9 @@ pub fn list_resources(archetypes: &Archetypes, components: &Components) -> Strin
     // sort list alphebetically
     r.sort();
 
-    output.push_str("[resource name]\n");
+    writeln!(output, "[resource name]").unwrap();
     r.iter()
-        .for_each(|name| output.push_str(&format!("{}\n", name)));
+        .for_each(|name| writeln!(output, "{}", name).unwrap());
 
     output
 }
@@ -64,21 +66,21 @@ fn list_components(c: &Components, short: bool, filter: Option<&str>) -> String 
     names.sort();
 
     let mut output = String::new();
-    output.push_str("[component id] [component name]\n");
+    writeln!(output, "[component id] [component name]").unwrap();
     names
         .iter()
-        .for_each(|(id, name)| output.push_str(&format!("{} {}\n", id, name)));
+        .for_each(|(id, name)| writeln!(output, "{} {}", id, name).unwrap());
 
     output
 }
 
 fn list_entities(e: &Entities) -> String {
     let mut output = String::new();
-    output.push_str(&format!("[entity index] [archetype id]\n"));
+    writeln!(output, "[entity index] [archetype id]").unwrap();
     for id in 0..e.len() {
         if let Some(entity) = e.resolve_from_id(id) {
             if let Some(location) = e.get(entity) {
-                output.push_str(&format!("{} {}\n", id, location.archetype_id.index()));
+                writeln!(output, "{} {}", id, location.archetype_id.index()).unwrap();
             }
         }
     }
@@ -88,25 +90,25 @@ fn list_entities(e: &Entities) -> String {
 
 fn list_archetypes(a: &Archetypes) -> String {
     let mut output = String::new();
-    output.push_str(&format!("[id] [entity count]\n"));
+    writeln!(output, "[id] [entity count]").unwrap();
     a.iter().for_each(|archetype| {
-        output.push_str(&format!(
-            "{} {}\n",
+        writeln!(output,
+            "{} {}",
             archetype.id().index(),
             archetype.entities().iter().count()
-        ))
+        ).unwrap()
     });
 
     output
 }
 
 fn print_ecs_counts(a: &Archetypes, c: &Components, e: &Entities) -> String {
-    String::from(format!(
+    format!(
         "entities: {}, components: {}, archetypes: {}\n",
         e.len(),
         c.len(),
         a.len()
-    ))
+    )
 }
 
 fn find_archetypes_by_component_name(
@@ -116,27 +118,29 @@ fn find_archetypes_by_component_name(
 ) -> String {
     let components = get_components_by_name(c, false, Some(component_name));
 
-    if components.len() == 0 {
-        return String::from(format!("No component found with name {}\n", component_name));
+    if components.is_empty() {
+        return format!("No component found with name {}\n", component_name);
     }
 
     if components.len() > 1 {
         let mut output = String::new();
-        output.push_str(&format!(
-            "More than one component found with name {}\n",
+        writeln!(
+            output,
+            "More than one component found with name {}",
             component_name
-        ));
-        output.push_str(&format!(
-            "Consider searching with '--componentid' instead\n\n"
-        ));
-        output.push_str(&format!("[component id] [component name]\n"));
+        ).unwrap();
+        writeln!(
+            output,
+            "Consider searching with '--componentid' instead\n"
+        ).unwrap();
+        writeln!(output, "[component id] [component name]").unwrap();
         components
             .iter()
-            .for_each(|(id, name)| output.push_str(&format!("{} {}\n", id, name)));
+            .for_each(|(id, name)| writeln!(output, "{} {}", id, name).unwrap());
         return output;
     }
 
-    if let Some(id_name) = components.iter().next() {
+    if let Some(id_name) = components.get(0) {
         return find_archetypes_by_component_id(a, id_name.0);
     };
 
@@ -152,9 +156,9 @@ fn find_archetypes_by_component_id(a: &Archetypes, component_id: usize) -> Strin
         .filter(|archetype| archetype.components().any(|c| c.index() == component_id))
         .map(|archetype| archetype.id().index());
 
-    output.push_str(&format!("archetype ids:\n"));
-    archetypes.for_each(|id| output.push_str(&format!("{}, ", id)));
-    output.push_str("\n");
+    writeln!(output, "archetype ids:").unwrap();
+    archetypes.for_each(|id| write!(output, "{}, ", id).unwrap());
+    output.push('\n');
 
     output
 }
@@ -173,9 +177,9 @@ fn find_archetype_by_entity_id(a: &Archetypes, entity_id: u32) -> String {
 
     let archetype_id = get_archetype_id_by_entity_id(a, entity_id);
 
-    output.push_str(&format!("archetype id:\n"));
+    writeln!(output, "archetype id:").unwrap();
     if let Some(id) = archetype_id {
-        output.push_str(&format!("{}", id))
+        writeln!(output, "{}", id).unwrap()
     }
 
     output
@@ -185,22 +189,21 @@ fn find_entities_by_component_id(a: &Archetypes, component_id: usize) -> String 
     let entities: Vec<&Entity> = a
         .iter()
         .filter(|archetype| archetype.components().any(|c| c.index() == component_id))
-        .map(|archetype| archetype.entities())
-        .flatten()
+        .flat_map(|archetype| archetype.entities())
         .collect();
 
     if entities.iter().len() == 0 {
         let mut output = String::new();
-        output.push_str("no entites found\n");
+        writeln!(output, "no entites found").unwrap();
         return output;
     }
 
     let mut output = String::new();
-    output.push_str(&format!("entity ids:\n"));
+    writeln!(output, "entity ids:").unwrap();
     entities
         .iter()
-        .for_each(|id| output.push_str(&format!("{}, ", id.id())));
-    output.push_str("\n");
+        .for_each(|id| write!(output, "{}, ", id.id()).unwrap());
+    output.push('\n');
 
     output
 }
@@ -210,9 +213,9 @@ fn find_entities_by_component_name(a: &Archetypes, c: &Components, component_nam
 
     let mut output = String::new();
     components.iter().for_each(|(id, name)| {
-        output.push_str(&format!("{}\n", name));
+        writeln!(output, "{}", name).unwrap();
         output.push_str(&find_entities_by_component_id(a, *id));
-        output.push_str("\n");
+        output.push('\n');
     });
 
     output
@@ -221,17 +224,18 @@ fn find_entities_by_component_name(a: &Archetypes, c: &Components, component_nam
 fn print_archetype(a: &Archetypes, c: &Components, archetype_id: ArchetypeId) -> String {
     let mut output = String::new();
     if let Some(archetype) = a.get(archetype_id) {
-        output.push_str(&format!("id: {:?}\n", archetype.id()));
-        output.push_str(&format!("table_id: {:?}\n", archetype.table_id()));
-        output.push_str(&format!(
+        writeln!(output, "id: {:?}", archetype.id()).unwrap();
+        writeln!(output, "table_id: {:?}", archetype.table_id()).unwrap();
+        write!(
+            output,
             "entities ({}): ",
             archetype.entities().iter().count()
-        ));
+        ).unwrap();
         archetype
             .entities()
             .iter()
-            .for_each(|entity| output.push_str(&format!("{}, ", entity.id())));
-        output.push_str(&format!("\n"));
+            .for_each(|entity| writeln!(output, "{}, ", entity.id()).unwrap());
+        writeln!(output).unwrap();
         // not sure what entity table rows is, so commenting out for now
         // print!(
         //     "entity table rows ({}): ",
@@ -242,34 +246,37 @@ fn print_archetype(a: &Archetypes, c: &Components, archetype_id: ArchetypeId) ->
         //     .iter()
         //     .for_each(|row| print!("{}, ", row));
         // println!("");
-        output.push_str(&format!(
+        write!(
+            output,
             "table_components ({}): ",
             archetype.table_components().iter().count()
-        ));
+        ).unwrap();
         archetype
             .table_components()
             .iter()
             .map(|id| (id.index(), c.get_info(*id).unwrap()))
             .map(|(id, info)| (id, get_short_name(info.name())))
-            .for_each(|(id, name)| output.push_str(&format!("{} {}, ", id, name)));
-        output.push_str("\n");
+            .for_each(|(id, name)| write!(output, "{} {}, ", id, name).unwrap());
+        output.push('\n');
 
-        output.push_str(&format!(
+        write!(
+            output,
             "sparse set components ({}): ",
             archetype.sparse_set_components().iter().count()
-        ));
+        ).unwrap();
         archetype
             .sparse_set_components()
             .iter()
             .map(|id| (id.index(), c.get_info(*id).unwrap()))
             .map(|(id, info)| (id, get_short_name(info.name())))
-            .for_each(|(id, name)| output.push_str(&format!("{} {}, ", id, name)));
-        output.push_str(&format!("\n"));
+            .for_each(|(id, name)| write!(output, "{} {}, ", id, name).unwrap());
+        writeln!(output).unwrap();
     } else {
-        output.push_str(&format!(
-            "No archetype found with id: {}\n",
+        writeln!(
+            output,
+            "No archetype found with id: {}",
             archetype_id.index()
-        ));
+        ).unwrap();
     }
 
     output
@@ -278,16 +285,16 @@ fn print_archetype(a: &Archetypes, c: &Components, archetype_id: ArchetypeId) ->
 fn print_component(c: &Components, component_id: usize) -> String {
     let mut output = String::new();
     if let Some(info) = c.get_info(ComponentId::new(component_id)) {
-        output.push_str(&format!("Name: {}\n", info.name()));
-        output.push_str(&format!("Id: {}\n", info.id().index()));
-        output.push_str("StorageType: ");
+        writeln!(output, "Name: {}", info.name()).unwrap();
+        writeln!(output, "Id: {}", info.id().index()).unwrap();
+        write!(output, "StorageType: ").unwrap();
         match info.storage_type() {
             StorageType::Table => output.push_str("Table\n"),
             StorageType::SparseSet => output.push_str("SparseSet\n"),
         }
-        output.push_str(&format!("SendAndSync: {}\n", info.is_send_and_sync()));
+        writeln!(output, "SendAndSync: {}", info.is_send_and_sync()).unwrap();
     } else {
-        output.push_str(&format!("No component found with id: {}", component_id));
+        write!(output, "No component found with id: {}", component_id).unwrap();
     }
 
     output
@@ -299,12 +306,12 @@ fn print_component_by_name(c: &Components, component_name: &str) -> String {
     let mut output = String::new();
     components
         .iter()
-        .for_each(|(id, _)| output.push_str(&format!("{}\n", &print_component(c, *id))));
+        .for_each(|(id, _)| writeln!(output, "{}", &print_component(c, *id)).unwrap());
 
     output
 }
 
-pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
+pub fn build_commands(app: App) -> App {
     let app = app.subcommand(
             App::new("counts").about("print counts of archetypes, components, and entities"),
         )
