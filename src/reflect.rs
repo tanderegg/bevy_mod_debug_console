@@ -1,7 +1,9 @@
+use std::fmt::Write;
+
 use bevy::reflect::TypeRegistry;
 use clap::{App, AppSettings, ArgMatches};
 
-pub fn build_commands<'a>(app: App<'a>) -> App<'a> {
+pub fn build_commands(app: App) -> App {
     let app = app.subcommand(
         App::new("reflect")
             .about("get reflection info")
@@ -28,7 +30,7 @@ fn list_reflection(reflect: &TypeRegistry) -> String {
     let type_registry = reflect.read();
 
     type_registry.iter().for_each(|type_registration| {
-        output.push_str(&format!("{}\n", type_registration.short_name()))
+        writeln!(output, "{}", type_registration.short_name()).unwrap()
     });
 
     output

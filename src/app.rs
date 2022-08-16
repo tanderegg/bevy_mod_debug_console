@@ -8,14 +8,12 @@ use bevy::{
 use clap::{App, ArgMatches};
 use std::process::exit;
 
-pub fn build_commands<'a>(app_name: &'a str) -> App {
+pub fn build_commands(app_name: &str) -> App {
     let app = App::new(app_name);
 
     let app = build_app_commands(app);
     let app = ecs::build_commands(app);
-    let app = reflect::build_commands(app);
-
-    app
+    reflect::build_commands(app)
 }
 
 pub fn match_commands(

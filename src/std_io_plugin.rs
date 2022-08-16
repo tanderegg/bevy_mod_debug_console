@@ -18,7 +18,7 @@ fn parse_input(
 ) {
     if let Ok(line) = line_channel.try_recv() {
         let app_name = "";
-        println!("");
+        println!();
         let split = line.split_whitespace();
         let mut args = vec![app_name];
         args.append(&mut split.collect());
@@ -26,7 +26,7 @@ fn parse_input(
         let matches_result = build_commands(app_name).try_get_matches_from(args);
 
         if let Err(e) = matches_result {
-            println!("{}", e.to_string());
+            println!("{}", e);
             print!(">>> ");
             io::stdout().flush().unwrap();
             return;
